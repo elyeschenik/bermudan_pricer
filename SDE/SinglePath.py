@@ -21,11 +21,9 @@ class SinglePath:
             self.Times.append(self.Times[-1] + self.timeStep)
 
     def GetValue(self, time):
-        if time < self.StartTime:
-            #print("Value on initial time")
+        if time <= self.StartTime:
             return self.Values[0]
-        if time > self.EndTime:
-            #print("Value on terminal time")
+        if time >= self.EndTime:
             return self.Values[-1]
 
         if time in self.Times:

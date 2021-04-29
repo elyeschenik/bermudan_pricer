@@ -29,37 +29,42 @@ VarianceReduction = True
 
 #Bermudan case
 exercise_dates = [0.25, 0.5, 0.75, 1]
-L = 5
+L = 6
 
 
 #time frame
 StartTime = 0
 EndTime = maturity
-NbSteps = 100
-NbSim = 1000
+NbSteps = 252
+NbSim = 400
+
+#Variance reduction
+
+eps = 0.5
+ConfidenceLevel = 0.025
 
 
 Call = EuropeanSingleNameCall(spot, strike, rate, vol, maturity, Gen)
-print("Single name call price: {}".format(Call.ComputePrice(StartTime, NbSteps, NbSim)))
+print("Single name call price: {:.2f}".format(Call.ComputePrice(StartTime, NbSteps, NbSim)))
 
-BasketCall = EuropeanBasketCall(spots, strike, rate, var_covar, maturity, Gen, dim, alpha, VarianceReduction)
-print("Basket call price: {}".format(BasketCall.ComputePrice(StartTime, NbSteps, NbSim)))
+BasketCall = EuropeanBasketCall(spots, strike, rate, var_covar, maturity, Gen, dim, alpha, eps, ConfidenceLevel)
+print("Basket call price: {:.2f}".format(BasketCall.ComputePricePCV(StartTime, NbSteps, NbSim)))
 
 Put = EuropeanSingleNamePut(spot, strike, rate, vol, maturity, Gen)
-print("Single name put price: {}".format(Put.ComputePrice(StartTime, NbSteps, NbSim)))
+print("Single name put price: {:.2f}".format(Put.ComputePrice(StartTime, NbSteps, NbSim)))
 
 BasketPut = EuropeanBasketPut(spots, strike, rate, var_covar, maturity, Gen, dim, alpha)
-print("Basket put price: {}".format(BasketPut.ComputePrice(StartTime, NbSteps, NbSim)))
+print("Basket put price: {:.2f}".format(BasketPut.ComputePrice(StartTime, NbSteps, NbSim)))
 
 BermudanCall = BermudanSingleNameCall(spot, strike, rate, vol, maturity, Gen, exercise_dates, L)
-print("Bermudan single name call price: {}".format(BermudanCall.ComputePrice(StartTime, NbSteps, NbSim)))
+print("Bermudan single name call price: {:.2f}".format(BermudanCall.ComputePrice(StartTime, NbSteps, NbSim)))
 
-BBasketCall = BermudanBasketCall(spots, strike, rate, var_covar, maturity, Gen, dim, alpha, exercise_dates, L)
-print("Bermudan Basket call price: {}".format(BBasketCall.ComputePrice(StartTime, NbSteps, NbSim)))
+BBasketCall = BermudanBasketCall(spots, strike, rate, var_covar, maturity, Gen, dim, alpha, exercise_dates, L, eps, ConfidenceLevel)
+print("Bermudan Basket call price: {:.2f}".format(BBasketCall.ComputePrice(StartTime, NbSteps, NbSim)))
 
 BermudanPut = BermudanSingleNamePut(spot, strike, rate, vol, maturity, Gen, exercise_dates, L)
-print("Bermudan single name put price: {}".format(BermudanPut.ComputePrice(StartTime, NbSteps, NbSim)))
+print("Bermudan single name put price: {:.2f}".format(BermudanPut.ComputePrice(StartTime, NbSteps, NbSim)))
 
 BBasketPut = BermudanBasketPut(spots, strike, rate, var_covar, maturity, Gen, dim, alpha, exercise_dates, L)
-print("Bermudan Basket put price: {}".format(BBasketPut.ComputePrice(StartTime, NbSteps, NbSim)))
+print("Bermudan Basket put price: {:.2f}".format(BBasketPut.ComputePrice(StartTime, NbSteps, NbSim)))
 

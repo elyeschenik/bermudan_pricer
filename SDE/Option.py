@@ -24,3 +24,10 @@ class Option:
             return S_0 * norm.cdf(d1) - np.exp(-r * T) * K * norm.cdf(d2)
         else:
             return -S_0 * norm.cdf(-d1) + np.exp(-r * T) * K * norm.cdf(-d2)
+
+    def VarReductionInfo(self, price):
+        print("The variance went from {:.2f} to {:.2f}".format(self.Variance, self.VariancePCV))
+        print("The minimum number of iteration for the true "
+              "price to be in the interval "
+              "{:.2f} +/- {} with {}% confidence level went from {} to {} ".format(price, self.eps, self.ConfidenceLevel * 100,
+                                                                            self.MinSim, self.MinSimPCV))
