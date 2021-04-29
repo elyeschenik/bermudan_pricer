@@ -1,23 +1,16 @@
 from VarianceReduction import *
+from scipy.stats import norm
 
 class PseudoControlVariate(VarianceReduction):
 
-    def __init__(self):
+    def __init__(self, spot, strike, rate, vol, maturity, Gen, dim, alpha):
         super(PseudoControlVariate, self).__init__()
+        self.model = BSEulerND(Gen, spot, rate, vol, dim)
+        self.f_CV = lambda x: np.exp(-rate * maturity) * (max(np.dot(alpha.T, x)[0,0] - strike, 0) - max(np.exp(np.dot(alpha.T, np.log(x))[0,0]), 0))
 
-    def Simulate(self, StartTime, EndTime, NbSteps):
-        Path = SinglePath(StartTime, EndTime, NbSteps)
-        Path.AddValue(self.spot)
-        dt = Path.timeStep
-        lastInserted = self.spot
-        for i in range(Path.NbSteps):
-            nextValue = lastInserted + lastInserted * (self.rate * dt + self.vol * self.Gen.Generate() * np.sqrt(dt))
-            Path.AddValue(nextValue)
-            lastInserted = nextValue
-        self.Paths.append(Path)
+    def compute(self, StartTime, NbSteps, NbSim):
+        self.model.SimulateMultiplePaths(StartTime, self.maturity, NbSteps, NbSim)
+        price = sum([self.f_CV(path.GetValue(self.maturity)) for path in self.model.Paths])/NbSim
 
-    @abstractmethod
-    def Generate(self):
-        pass
 
 
