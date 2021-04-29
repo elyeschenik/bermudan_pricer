@@ -16,7 +16,7 @@ class BoxMuller(NormalGenerator):
         self.Y = 0
 
 
-    def Generate(self):
+    def Generate_bis(self):
 
         if self.requirenewsim:
             unif1 = self.FirstLinear.Generate()
@@ -37,7 +37,7 @@ class BoxMuller(NormalGenerator):
 
         return result
 
-    def Generate_bis(self):
+    def Generate(self):
         return np.random.normal()
 
 

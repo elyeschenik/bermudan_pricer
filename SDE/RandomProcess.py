@@ -1,6 +1,6 @@
 from abc import abstractmethod
 import sys
-sys.path.insert(1, 'C:/Users/Elyès Chenik/Documents/Dauphine/M2/Numerical Finance/BermudanPricing/RandomGenerator')
+sys.path.insert(1, '../RandomGenerator')
 from RandomGenerator import *
 
 class RandomProcess:
