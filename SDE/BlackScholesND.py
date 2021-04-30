@@ -1,5 +1,4 @@
 from RandomProcess import  *
-from SinglePath import *
 import numpy as np
 
 class BlackScholesND(RandomProcess):

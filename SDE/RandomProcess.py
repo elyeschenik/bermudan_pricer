@@ -3,6 +3,7 @@ import sys
 from scipy.stats import t
 sys.path.insert(1, '../RandomGenerator')
 from RandomGenerator import *
+from SinglePath import *
 
 class RandomProcess:
 

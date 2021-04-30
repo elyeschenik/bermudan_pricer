@@ -1,9 +1,9 @@
-from ContinuousGenerator import *
+from UniformGenerator import *
 
-class NormalGenerator(ContinuousGenerator):
+class QuasiGenerator(UniformGenerator):
 
     def __init__(self, Current):
-        super(NormalGenerator, self).__init__(0, 1)
+        super(QuasiGenerator, self).__init__()
         self.Current = Current
 
     def GetCurrent(self):
@@ -12,7 +12,3 @@ class NormalGenerator(ContinuousGenerator):
     @abstractmethod
     def Generate(self):
         pass
-    
-
-
-

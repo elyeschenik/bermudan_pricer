@@ -4,15 +4,9 @@ from BSEulerND import *
 
 class EuropeanOption(Option):
     def __init__(self, spot, strike, rate, vol, maturity, Gen, eps, ConfidenceLevel):
-        super(EuropeanOption, self).__init__(spot, strike, rate, vol, maturity, Gen)
+        super(EuropeanOption, self).__init__(spot, strike, rate, vol, maturity, Gen, eps, ConfidenceLevel)
 
-        #variables for PCV
-        self.eps = eps
-        self.ConfidenceLevel = ConfidenceLevel
-        self.Variance = 0
-        self.VariancePCV = 0
-        self.MinSim = 0
-        self.MinSimPCV = 0
+
 
     def ComputePrice(self, StartTime, NbSteps, NbSim):
         self.model.SimulateMultiplePaths(StartTime, self.maturity, NbSteps, NbSim)
@@ -50,18 +44,20 @@ class EuropeanBasketOption(EuropeanOption):
 
     def __init__(self, spot, strike, rate, vol, maturity, Gen, dim, alpha, eps, ConfidenceLevel):
         super(EuropeanBasketOption, self).__init__(spot, strike, rate, vol, maturity, Gen, eps, ConfidenceLevel)
-
-        if dim <= 1:
-            raise Exception("Please input a dimension with values >= 2. If dim=1, use a single name class instead")
-        if spot.shape != (dim, 1):
-            raise Exception(
-                "Wrong shape for the current spot price, please input a numpy array of shape ({},1)".format(dim))
-        if vol.shape != (dim, dim):
-            raise Exception(
-                "Wrong shape for the var-covar matrix, please input a numpy array of shape ({},{})".format(dim,
-                                                                                                           dim))
-        if alpha.shape != (dim, 1):
-            raise Exception("Wrong shape for the weights, please input a numpy array of shape ({},1)".format(dim))
+        try:
+            if dim <= 1:
+                raise Exception("Please input a dimension with values >= 2. If dim=1, use a single name class instead")
+            if spot.shape != (dim, 1):
+                raise Exception(
+                    "Wrong shape for the current spot price, please input a numpy array of shape ({},1)".format(dim))
+            if vol.shape != (dim, dim):
+                raise Exception(
+                    "Wrong shape for the var-covar matrix, please input a numpy array of shape ({},{})".format(dim,
+                                                                                                               dim))
+            if alpha.shape != (dim, 1):
+                raise Exception("Wrong shape for the weights, please input a numpy array of shape ({},1)".format(dim))
+        except:
+            raise Exception("Please make sure that the spot, var-covar and alpha are numpy arrays")
 
         self.dim = dim
         self.alpha = alpha
