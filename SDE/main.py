@@ -25,11 +25,9 @@ var_covar = np.array([[0.09,.05],[0.05, 0.09]])
 dim = 2
 alpha = np.array([[0.3],[0.7]])
 
-VarianceReduction = True
-
 #Bermudan case
 exercise_dates = [0.25, 0.5, 0.75, 1]
-L = 6
+L = 6   #number of basis functions of L2(R)
 
 
 #time frame

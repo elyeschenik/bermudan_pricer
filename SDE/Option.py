@@ -3,7 +3,7 @@ import numpy as np
 from scipy.stats import norm
 
 class Option:
-    def __init__(self, spot, strike, rate, vol, maturity, Gen):
+    def __init__(self, spot, strike, rate, vol, maturity, Gen, eps, ConfidenceLevel):
         self.spot = spot
         self.strike = strike
         self.rate = rate
@@ -11,6 +11,14 @@ class Option:
         self.maturity = maturity
 
         self.Gen = Gen
+
+        #Variance reduction variables
+        self.eps = eps
+        self.ConfidenceLevel = ConfidenceLevel
+        self.Variance = 0
+        self.VariancePCV = 0
+        self.MinSim = 0
+        self.MinSimPCV = 0
 
     @abstractmethod
     def ComputePrice(self):
