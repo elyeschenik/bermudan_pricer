@@ -1,10 +1,10 @@
 from BlackScholesND import  *
 
 
-class BSMilstein(BlackScholesND):
+class BSMilsteinND(BlackScholesND):
 
     def __init__(self, Gen, spot, rate, var_covar, dim):
-        super(BSMilstein, self).__init__(Gen, spot, rate, var_covar, dim)
+        super(BSMilsteinND, self).__init__(Gen, spot, rate, var_covar, dim)
 
 
         if np.all(np.linalg.eigvals(var_covar) > 0): #check if var-covar matrix is positive definite

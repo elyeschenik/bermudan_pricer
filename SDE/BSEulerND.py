@@ -3,8 +3,8 @@ from BlackScholesND import  *
 
 class BSEulerND(BlackScholesND):
 
-    def __init__(self, Gen, spot, rate, var_covar, dim, antithetic = False):
-        super(BSEulerND, self).__init__(Gen, spot, rate, var_covar, dim, antithetic)
+    def __init__(self, Gen, spot, rate, var_covar, dim):
+        super(BSEulerND, self).__init__(Gen, spot, rate, var_covar, dim)
 
 
         if np.all(np.linalg.eigvals(var_covar) > 0): #check if var-covar matrix is positive definite

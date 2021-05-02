@@ -13,7 +13,7 @@ class EuropeanOption(Option):
         else:
             self.model.SimulateMultiplePaths(StartTime, self.maturity, NbSteps, NbSim)
         price = np.exp(-self.rate * self.maturity) * np.mean(
-            [self.f(path.GetValue(self.maturity)) for path in self.model.Paths])
+            [self.f(self.model.GetPath(j).GetValue(self.maturity)) for j in range(len(self.model.Paths))])
         self.Variance = self.model.GetVariance(self.f, self.maturity)
         return price
 
@@ -35,7 +35,7 @@ class EuropeanOption(Option):
         ExpectationY = self.BSClosedForm(S_0, K, r, sigma, T, True)
 
         price = np.exp(-self.rate * self.maturity) * sum(
-            [self.f_PCV(path.GetValue(self.maturity)) for path in self.model.Paths]) / NbSim + ExpectationY
+            [self.f_PCV(self.model.GetPath(j).GetValue(self.maturity)) for j in range(len(self.model.Paths))]) / NbSim + ExpectationY
 
         self.Variance = self.model.GetVariance(self.f, self.maturity)
         self.VariancePCV = self.model.GetVariance(self.f_PCV, self.maturity)
@@ -67,7 +67,7 @@ class EuropeanBasketOption(EuropeanOption):
 
         self.dim = dim
         self.alpha = alpha
-        self.model = BSEulerND(Gen, spot, rate, vol, dim, antithetic)
+        self.model = BSEulerND(Gen, spot, rate, vol, dim)
 
 
 class EuropeanSingleNameOption(EuropeanOption):
@@ -75,9 +75,9 @@ class EuropeanSingleNameOption(EuropeanOption):
     def __init__(self, spot, strike, rate, vol, maturity, Gen, model, eps, ConfidenceLevel, antithetic):
         super(EuropeanSingleNameOption, self).__init__(spot, strike, rate, vol, maturity, Gen, eps, ConfidenceLevel, antithetic)
         if model == "euler":
-            self.model = BSEuler1D(Gen, spot, rate, vol, antithetic)
+            self.model = BSEuler1D(Gen, spot, rate, vol)
         elif model == "milstein":
-            self.model = BSMilstein1D(Gen, spot, rate, vol, antithetic)
+            self.model = BSMilstein1D(Gen, spot, rate, vol)
         else:
             raise Exception("Wrong model name, please input either 'euler' or 'milstein'")
 

@@ -31,6 +31,7 @@ class Option:
         pass
 
 
+
     def BSClosedForm(self, S_0, K, r, sigma, T, isCall):
         d1 = (np.log(S_0/K) + (r + 0.5 * sigma**2)*T)/(sigma * np.sqrt(T))
         d2 = d1 - sigma * np.sqrt(T)
@@ -40,7 +41,7 @@ class Option:
             return -S_0 * norm.cdf(-d1) + np.exp(-r * T) * K * norm.cdf(-d2)
 
     def VarReductionInfo(self, price):
-        print("The variance of the simulated paths went from {:.2f} to {:.2f}".format(self.Variance, self.VariancePCV))
+        print("Thanks to the use of Pseudo Control Variate, the variance of the simulated paths went from {:.2f} to {:.2f}".format(self.Variance, self.VariancePCV))
         print("The minimum number of iteration for the computed "
               "price to be in the interval "
               "TRUE PRICE +/- {} with {}% confidence level went from {} to {} ".format(self.eps, self.ConfidenceLevel * 100,

@@ -32,14 +32,14 @@ class BermudanOption(Option):
 
             for j in range(NbSim):
                 B[j, 0] = np.exp(-self.rate * (Tau[j, k + 1] - t_k)) * self.f(
-                    self.model.Paths[j].GetValue(Tau[j, k + 1]))
+                    self.model.GetPath(j).GetValue(Tau[j, k + 1]))
                 for I in range(self.L):
-                    P[j, I] = self.computeP(self.model.Paths[j].GetValue(t_k), I)
+                    P[j, I] = self.computeP(self.model.GetPath(j).GetValue(t_k), I)
 
             A[:, k] = np.linalg.lstsq(P, B)[0][:, 0]
 
             for j in range(NbSim):
-                if self.f(self.model.Paths[j].GetValue(t_k)) >= np.dot(P[j, :], A[:, k]):
+                if self.f(self.model.GetPath(j).GetValue(t_k)) >= np.dot(P[j, :], A[:, k]):
                     Tau[j, k] = t_k
                 else:
                     Tau[j, k] = Tau[j, k + 1]
@@ -48,7 +48,7 @@ class BermudanOption(Option):
     def ComputePrice(self, StartTime, NbSteps, NbSim):
         """ Compute the price of the option """
         Tau = self.FindStoppingTime(StartTime, NbSteps, NbSim)
-        price = np.mean([np.exp(-self.rate * Tau[j, 0]) * self.f(self.model.Paths[j].GetValue(Tau[j, 0])) for j in
+        price = np.mean([np.exp(-self.rate * Tau[j, 0]) * self.f(self.model.GetPath(j).GetValue(Tau[j, 0])) for j in
                              range(NbSim)])
         return price
 
@@ -66,7 +66,7 @@ class BermudanOption(Option):
 
         ExpectationY = self.BSClosedForm(S_0, K, r, sigma, T, True)
 
-        price = sum([np.exp(-self.rate * Tau[j, 0]) * self.f_PCV(self.model.Paths[j].GetValue(Tau[j, 0])) for j in
+        price = sum([np.exp(-self.rate * Tau[j, 0]) * self.f_PCV(self.model.GetPath(j).GetValue(Tau[j, 0])) for j in
                      range(NbSim)]) / NbSim + ExpectationY
 
         self.Variance = self.model.GetVariance(self.f, self.maturity)
@@ -115,9 +115,9 @@ class BermudanSingleNameOption(BermudanOption):
     def __init__(self, spot, strike, rate, vol, maturity, Gen, model, exercise_dates, L, eps, ConfidenceLevel, antithetic):
         super(BermudanSingleNameOption, self).__init__(spot, strike, rate, vol, maturity, Gen, exercise_dates, L, eps, ConfidenceLevel, antithetic)
         if model == "euler":
-            self.model = BSEuler1D(Gen, spot, rate, vol, antithetic)
+            self.model = BSEuler1D(Gen, spot, rate, vol)
         elif model == "milstein":
-            self.model = BSMilstein1D(Gen, spot, rate, vol, antithetic)
+            self.model = BSMilstein1D(Gen, spot, rate, vol)
         else:
             raise Exception("Wrong model name, please input either 'euler' or 'milstein'")
 

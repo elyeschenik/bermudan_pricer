@@ -1,3 +1,7 @@
+import sys
+sys.path.insert(0, './RandomGenerator')
+sys.path.insert(1, './SDE')
+
 from SinglePath import *
 from BSEuler1D import *
 from EuropeanOption import *
@@ -12,13 +16,13 @@ warnings.filterwarnings("ignore")
 ####### Testing options ###########
 
 #Option type variables
-Eur_Berm = "Berm" #'Eur' for European option or 'Ber' for Bermudan
+Eur_Berm = "Berm" #'Eur' for European option or 'Berm' for Bermudan
 SN_Basket = "Basket" #'SN' for single name option or 'Basket' for basket option
 Call_Put = "Call" #'Call' for call option and 'Put' for put option
 
 #Common parameters (some in the single name option type only)
 
-uniform_method = 'dl'  #'lc', 'ec', 'vdc' or 'dl'. To use quasi random simulation, use 'dl' or 'vdc'
+uniform_method = 'dl'  #'lc', 'ec', 'vdc' or 'dl'. To use quasi random simulations, use 'dl' or 'vdc'
 Gen = BoxMuller(uniform_method) #BoxMuller or CentralLimit
 
 spot = 100

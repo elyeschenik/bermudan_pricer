@@ -2,8 +2,8 @@ from BlackScholes1D import  *
 
 class BSEuler1D(BlackScholes1D):
 
-    def __init__(self, Gen, spot, rate, vol, antithetic = False):
-        super(BSEuler1D, self).__init__(Gen, spot, rate, vol, antithetic)
+    def __init__(self, Gen, spot, rate, vol):
+        super(BSEuler1D, self).__init__(Gen, spot, rate, vol)
 
     def Simulate(self, StartTime, EndTime, NbSteps):
         Path = SinglePath(StartTime, EndTime, NbSteps)
