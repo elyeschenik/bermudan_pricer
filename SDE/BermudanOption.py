@@ -15,6 +15,7 @@ class BermudanOption(Option):
         """ Algorithm to build the matrix of stopping times for each price simulation at each exercice date"""
         if self.antithetic:
             self.model.SimulateMultiplePathsAntithetic(StartTime, self.maturity, NbSteps, NbSim)
+            NbSim = len(self.model.Paths)
         else:
             self.model.SimulateMultiplePaths(StartTime, self.maturity, NbSteps, NbSim)
         n = len(self.exercise_dates)
@@ -48,13 +49,17 @@ class BermudanOption(Option):
     def ComputePrice(self, StartTime, NbSteps, NbSim):
         """ Compute the price of the option """
         Tau = self.FindStoppingTime(StartTime, NbSteps, NbSim)
+        NbSim = len(self.model.Paths)
         price = np.mean([np.exp(-self.rate * Tau[j, 0]) * self.f(self.model.GetPath(j).GetValue(Tau[j, 0])) for j in
                              range(NbSim)])
+        self.Variance = self.model.GetVariance(self.f, Tau[:,0].mean())
+        self.MinSim = self.model.GetIterationNumber(self.eps, self.ConfidenceLevel, self.f, Tau[:,0].mean())
         return price
 
     def ComputePricePCV(self, StartTime, NbSteps, NbSim):
         """ Compute the price using Pseudo control variate to reduce variance """
         Tau = self.FindStoppingTime(StartTime, NbSteps, NbSim)
+        NbSim = len(self.model.Paths)
         basket_var = np.dot(self.alpha.T, np.dot(self.vol, self.alpha))[0, 0]
         sigma_squared = (self.model.B ** 2)
 
@@ -62,17 +67,17 @@ class BermudanOption(Option):
         K = self.strike
         r = self.rate - 0.5 * np.dot(self.alpha.T, sigma_squared.sum(axis=1))[0] + 0.5 * basket_var
         sigma = np.sqrt(basket_var)
-        T = sum([Tau[j,0] for j in range(NbSim)]) / NbSim
+        T = Tau[:,0].mean()
 
         ExpectationY = self.BSClosedForm(S_0, K, r, sigma, T, True)
 
-        price = sum([np.exp(-self.rate * Tau[j, 0]) * self.f_PCV(self.model.GetPath(j).GetValue(Tau[j, 0])) for j in
-                     range(NbSim)]) / NbSim + ExpectationY
+        price = np.mean([np.exp(-self.rate * Tau[j, 0]) * self.f_PCV(self.model.GetPath(j).GetValue(Tau[j, 0])) for j in
+                     range(NbSim)]) + ExpectationY
 
-        self.Variance = self.model.GetVariance(self.f, self.maturity)
-        self.VariancePCV = self.model.GetVariance(self.f_PCV, self.maturity)
-        self.MinSim = self.model.GetIterationNumber(self.eps, self.ConfidenceLevel, self.f, self.maturity)
-        self.MinSimPCV = self.model.GetIterationNumber(self.eps, self.ConfidenceLevel, self.f_PCV, self.maturity)
+        self.Variance = self.model.GetVariance(self.f, Tau[:,0].mean())
+        self.VariancePCV = self.model.GetVariance(self.f_PCV, Tau[:,0].mean())
+        self.MinSim = self.model.GetIterationNumber(self.eps, self.ConfidenceLevel, self.f, Tau[:,0].mean())
+        self.MinSimPCV = self.model.GetIterationNumber(self.eps, self.ConfidenceLevel, self.f_PCV, Tau[:,0].mean())
 
         self.VarReductionInfo(price)
 

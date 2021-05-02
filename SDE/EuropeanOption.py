@@ -10,17 +10,21 @@ class EuropeanOption(Option):
         """ Compute the price of the option """
         if self.antithetic:
             self.model.SimulateMultiplePathsAntithetic(StartTime, self.maturity, NbSteps, NbSim)
+            NbSim = len(self.model.Paths)
         else:
             self.model.SimulateMultiplePaths(StartTime, self.maturity, NbSteps, NbSim)
         price = np.exp(-self.rate * self.maturity) * np.mean(
-            [self.f(self.model.GetPath(j).GetValue(self.maturity)) for j in range(len(self.model.Paths))])
+            [self.f(self.model.GetPath(j).GetValue(self.maturity)) for j in range(NbSim)])
+
         self.Variance = self.model.GetVariance(self.f, self.maturity)
+        self.MinSim = self.model.GetIterationNumber(self.eps, self.ConfidenceLevel, self.f, self.maturity)
         return price
 
     def ComputePricePCV(self, StartTime, NbSteps, NbSim):
         """ Compute the price using Pseudo control variate to reduce variance """
         if self.antithetic:
             self.model.SimulateMultiplePathsAntithetic(StartTime, self.maturity, NbSteps, NbSim)
+            NbSim = len(self.model.Paths)
         else:
             self.model.SimulateMultiplePaths(StartTime, self.maturity, NbSteps, NbSim)
         basket_var = np.dot(self.alpha.T, np.dot(self.vol, self.alpha))[0, 0]
@@ -34,8 +38,8 @@ class EuropeanOption(Option):
 
         ExpectationY = self.BSClosedForm(S_0, K, r, sigma, T, True)
 
-        price = np.exp(-self.rate * self.maturity) * sum(
-            [self.f_PCV(self.model.GetPath(j).GetValue(self.maturity)) for j in range(len(self.model.Paths))]) / NbSim + ExpectationY
+        price = np.exp(-self.rate * self.maturity) * np.mean(
+            [self.f_PCV(self.model.GetPath(j).GetValue(self.maturity)) for j in range(NbSim)]) + ExpectationY
 
         self.Variance = self.model.GetVariance(self.f, self.maturity)
         self.VariancePCV = self.model.GetVariance(self.f_PCV, self.maturity)
