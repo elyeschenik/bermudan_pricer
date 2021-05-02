@@ -1,22 +1,28 @@
 from Option import *
-from BSEuler1D import *
-from BSEulerND import *
 
 class EuropeanOption(Option):
-    def __init__(self, spot, strike, rate, vol, maturity, Gen, eps, ConfidenceLevel):
-        super(EuropeanOption, self).__init__(spot, strike, rate, vol, maturity, Gen, eps, ConfidenceLevel)
+    def __init__(self, spot, strike, rate, vol, maturity, Gen, eps, ConfidenceLevel, antithetic):
+        super(EuropeanOption, self).__init__(spot, strike, rate, vol, maturity, Gen, eps, ConfidenceLevel, antithetic)
 
 
 
     def ComputePrice(self, StartTime, NbSteps, NbSim):
-        self.model.SimulateMultiplePaths(StartTime, self.maturity, NbSteps, NbSim)
-        price = np.exp(-self.rate * self.maturity) * sum(
-            [self.f(path.GetValue(self.maturity)) for path in self.model.Paths]) / NbSim
+        """ Compute the price of the option """
+        if self.antithetic:
+            self.model.SimulateMultiplePathsAntithetic(StartTime, self.maturity, NbSteps, NbSim)
+        else:
+            self.model.SimulateMultiplePaths(StartTime, self.maturity, NbSteps, NbSim)
+        price = np.exp(-self.rate * self.maturity) * np.mean(
+            [self.f(path.GetValue(self.maturity)) for path in self.model.Paths])
         self.Variance = self.model.GetVariance(self.f, self.maturity)
         return price
 
     def ComputePricePCV(self, StartTime, NbSteps, NbSim):
-        self.model.SimulateMultiplePaths(StartTime, self.maturity, NbSteps, NbSim)
+        """ Compute the price using Pseudo control variate to reduce variance """
+        if self.antithetic:
+            self.model.SimulateMultiplePathsAntithetic(StartTime, self.maturity, NbSteps, NbSim)
+        else:
+            self.model.SimulateMultiplePaths(StartTime, self.maturity, NbSteps, NbSim)
         basket_var = np.dot(self.alpha.T, np.dot(self.vol, self.alpha))[0, 0]
         sigma_squared = (self.model.B ** 2)
 
@@ -42,8 +48,8 @@ class EuropeanOption(Option):
 
 class EuropeanBasketOption(EuropeanOption):
 
-    def __init__(self, spot, strike, rate, vol, maturity, Gen, dim, alpha, eps, ConfidenceLevel):
-        super(EuropeanBasketOption, self).__init__(spot, strike, rate, vol, maturity, Gen, eps, ConfidenceLevel)
+    def __init__(self, spot, strike, rate, vol, maturity, Gen, dim, alpha, eps, ConfidenceLevel, antithetic):
+        super(EuropeanBasketOption, self).__init__(spot, strike, rate, vol, maturity, Gen, eps, ConfidenceLevel, antithetic)
         try:
             if dim <= 1:
                 raise Exception("Please input a dimension with values >= 2. If dim=1, use a single name class instead")
@@ -61,20 +67,25 @@ class EuropeanBasketOption(EuropeanOption):
 
         self.dim = dim
         self.alpha = alpha
-        self.model = BSEulerND(Gen, spot, rate, vol, dim)
+        self.model = BSEulerND(Gen, spot, rate, vol, dim, antithetic)
 
 
 class EuropeanSingleNameOption(EuropeanOption):
 
-    def __init__(self, spot, strike, rate, vol, maturity, Gen, eps, ConfidenceLevel):
-        super(EuropeanSingleNameOption, self).__init__(spot, strike, rate, vol, maturity, Gen, eps, ConfidenceLevel)
-        self.model = BSEuler1D(Gen, spot, rate, vol)
+    def __init__(self, spot, strike, rate, vol, maturity, Gen, model, eps, ConfidenceLevel, antithetic):
+        super(EuropeanSingleNameOption, self).__init__(spot, strike, rate, vol, maturity, Gen, eps, ConfidenceLevel, antithetic)
+        if model == "euler":
+            self.model = BSEuler1D(Gen, spot, rate, vol, antithetic)
+        elif model == "milstein":
+            self.model = BSMilstein1D(Gen, spot, rate, vol, antithetic)
+        else:
+            raise Exception("Wrong model name, please input either 'euler' or 'milstein'")
 
 
 class EuropeanBasketCall(EuropeanBasketOption):
 
-    def __init__(self, spot, strike, rate, vol, maturity, Gen, dim, alpha, eps = 0, ConfidenceLevel = 0):
-        super(EuropeanBasketCall, self).__init__(spot, strike, rate, vol, maturity, Gen, dim, alpha, eps, ConfidenceLevel)
+    def __init__(self, spot, strike, rate, vol, maturity, Gen, dim, alpha, eps = 0, ConfidenceLevel = 0, antithetic = False):
+        super(EuropeanBasketCall, self).__init__(spot, strike, rate, vol, maturity, Gen, dim, alpha, eps, ConfidenceLevel, antithetic)
         self.f = lambda s: max(np.dot(alpha.T, s)[0, 0] - strike, 0)
         self.f_PCV = lambda s:  self.f(s) - max(np.exp(np.dot(alpha.T, np.log(s))[0, 0]) - strike, 0)
 
@@ -82,22 +93,22 @@ class EuropeanBasketCall(EuropeanBasketOption):
 
 class EuropeanSingleNameCall(EuropeanSingleNameOption):
 
-    def __init__(self, spot, strike, rate, vol, maturity, Gen, eps = 0, ConfidenceLevel = 0):
-        super(EuropeanSingleNameCall, self).__init__(spot, strike, rate, vol, maturity, Gen, eps, ConfidenceLevel)
+    def __init__(self, spot, strike, rate, vol, maturity, Gen, model, eps = 0, ConfidenceLevel = 0, antithetic = False):
+        super(EuropeanSingleNameCall, self).__init__(spot, strike, rate, vol, maturity, Gen, model, eps, ConfidenceLevel, antithetic)
         self.f = lambda s: max(s - strike, 0)
 
 
 
 class EuropeanBasketPut(EuropeanBasketOption):
 
-    def __init__(self, spot, strike, rate, vol, maturity, Gen, dim, alpha, eps = 0, ConfidenceLevel = 0):
-        super(EuropeanBasketPut, self).__init__(spot, strike, rate, vol, maturity, Gen, dim, alpha, eps, ConfidenceLevel)
+    def __init__(self, spot, strike, rate, vol, maturity, Gen, dim, alpha, eps = 0, ConfidenceLevel = 0, antithetic = False):
+        super(EuropeanBasketPut, self).__init__(spot, strike, rate, vol, maturity, Gen, dim, alpha, eps, ConfidenceLevel, antithetic)
         self.f = lambda s: max(strike - np.dot(alpha.T, s)[0, 0] , 0)
 
 
 class EuropeanSingleNamePut(EuropeanSingleNameOption):
 
-    def __init__(self, spot, strike, rate, vol, maturity, Gen, eps = 0, ConfidenceLevel = 0):
-        super(EuropeanSingleNamePut, self).__init__(spot, strike, rate, vol, maturity, Gen, eps, ConfidenceLevel)
+    def __init__(self, spot, strike, rate, vol, maturity, Gen, model, eps = 0, ConfidenceLevel = 0, antithetic = False):
+        super(EuropeanSingleNamePut, self).__init__(spot, strike, rate, vol, maturity, Gen, model, eps, ConfidenceLevel, antithetic)
         self.f = lambda s: max(strike - s, 0)
 

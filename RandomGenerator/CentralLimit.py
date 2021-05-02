@@ -8,7 +8,8 @@ class CentralLimit(NormalGenerator):
     def __init__(self, gen = 'lc'):
         super(CentralLimit, self).__init__(0)
         
-        if type(gen) != str : raise TypeError
+        if type(gen) != str:
+            raise TypeError
     
         if gen == 'lc':
             self.gen = LinearCongruential(27637, 40014, 0, 2147483563)
@@ -22,13 +23,7 @@ class CentralLimit(NormalGenerator):
             raise ValueError
 
     def Generate(self):
-        
-        sum_u = 0
-        for i in range(12):
-        
-            sum_u += self.gen.Generate()
-            
+        sum_u = sum([self.gen.Generate() for i in range(12)])
         self.Current = sum_u - 6
-        result = self.Current
 
-        return result
+        return self.Current

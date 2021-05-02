@@ -50,7 +50,14 @@ class DeLuca(QuasiGenerator):
         
         while result == 0 or result == 1:
             self.i += 1
-            result = self.nums[self.i]
+            if self.i < self.n - 1:
+                self.i += 1
+                result = self.nums[self.i]
+            else:
+                np.random.shuffle(self.nums)
+                self.i = 0
+                result = self.nums[self.i]
+
                     
         if self.i < self.n - 1:
             self.i += 1

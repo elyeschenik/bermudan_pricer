@@ -4,65 +4,83 @@ from EuropeanOption import *
 from BermudanOption import *
 
 from BoxMuller import *
+from CentralLimit import *
 
 import warnings
 
 warnings.filterwarnings("ignore")
 ####### Testing options ###########
 
-#common params
-Gen = BoxMuller()
+#Option type variables
+Eur_Berm = "Berm" #'Eur' for European option or 'Ber' for Bermudan
+SN_Basket = "Basket" #'SN' for single name option or 'Basket' for basket option
+Call_Put = "Call" #'Call' for call option and 'Put' for put option
+
+#Common parameters (some in the single name option type only)
+
+uniform_method = 'dl'  #'lc', 'ec', 'vdc' or 'dl'. To use quasi random simulation, use 'dl' or 'vdc'
+Gen = BoxMuller(uniform_method) #BoxMuller or CentralLimit
 
 spot = 100
 vol = 0.3
 rate = 0.01
 strike = 100
 maturity = 1
+#model to simulate the evolutioon of the asset prices
+model = "euler" #"euler" or "milstein", for basket options, there is no possible choice, only euler model is available
 
-#basket case
+#Parameters in the multi-asset case
 spots = np.array([[100],[100]])
 var_covar = np.array([[0.09,.05],[0.05, 0.09]])
 dim = 2
-alpha = np.array([[0.3],[0.7]])
+alpha = np.array([[0.3],[0.7]]) #weights matrix
 
-#Bermudan case
+#Parameters to use for the Bermudan options
 exercise_dates = [0.25, 0.5, 0.75, 1]
-L = 6   #number of basis functions of L2(R)
+L = 10  #number of basis functions of L2(R)
 
-
-#time frame
+#Parameters for the time frame of the option
 StartTime = 0
 EndTime = maturity
-NbSteps = 252
-NbSim = 400
+NbSteps = 252 * maturity
+NbSim = 300
 
-#Variance reduction
+#Variance reduction variables when using pseudo control variate
+eps = 0.5 #precision of the confidence interval
+ConfidenceLevel = 2.5/100 #confidence level of the confidence interval
 
-eps = 0.5
-ConfidenceLevel = 0.025
+#Possibility to simulate the price paths using antithetic variables thus reducing Variance
+antithetic = False #can be True or False
+
+def get_my_option(Eur_Berm, SN_Basket, Call_Put):
+    if Eur_Berm == "Eur":
+        if SN_Basket == "SN":
+            if Call_Put == "Call":
+                myOption = EuropeanSingleNameCall(spot, strike, rate, vol, maturity, Gen, model, eps, ConfidenceLevel, antithetic)
+            elif Call_Put == "Put":
+                myOption = EuropeanSingleNamePut(spot, strike, rate, vol, maturity, Gen, model, eps, ConfidenceLevel, antithetic)
+        elif SN_Basket == "Basket":
+            if Call_Put == "Call":
+                myOption = EuropeanBasketCall(spots, strike, rate, var_covar, maturity, Gen, dim, alpha, eps, ConfidenceLevel, antithetic)
+            elif Call_Put == "Put":
+                myOption = EuropeanBasketPut(spots, strike, rate, var_covar, maturity, Gen, dim, alpha, eps, ConfidenceLevel, antithetic)
+    elif Eur_Berm == "Berm":
+        if SN_Basket == "SN":
+            if Call_Put == "Call":
+                myOption = BermudanSingleNameCall(spot, strike, rate, vol, maturity, Gen, model, exercise_dates, L, eps, ConfidenceLevel, antithetic)
+            elif Call_Put == "Put":
+                myOption = BermudanSingleNamePut(spot, strike, rate, vol, maturity, Gen, model, exercise_dates, L, eps, ConfidenceLevel, antithetic)
+        elif SN_Basket == "Basket":
+            if Call_Put == "Call":
+                myOption = BermudanBasketCall(spots, strike, rate, var_covar, maturity, Gen, dim, alpha, exercise_dates, L, eps, ConfidenceLevel, antithetic)
+            elif Call_Put == "Put":
+                myOption = BermudanBasketPut(spots, strike, rate, var_covar, maturity, Gen, dim, alpha, exercise_dates, L, eps, ConfidenceLevel, antithetic)
+    return myOption
 
 
-Call = EuropeanSingleNameCall(spot, strike, rate, vol, maturity, Gen)
-print("Single name call price: {:.2f}".format(Call.ComputePrice(StartTime, NbSteps, NbSim)))
-
-BasketCall = EuropeanBasketCall(spots, strike, rate, var_covar, maturity, Gen, dim, alpha, eps, ConfidenceLevel)
-print("Basket call price: {:.2f}".format(BasketCall.ComputePricePCV(StartTime, NbSteps, NbSim)))
-
-Put = EuropeanSingleNamePut(spot, strike, rate, vol, maturity, Gen)
-print("Single name put price: {:.2f}".format(Put.ComputePrice(StartTime, NbSteps, NbSim)))
-
-BasketPut = EuropeanBasketPut(spots, strike, rate, var_covar, maturity, Gen, dim, alpha)
-print("Basket put price: {:.2f}".format(BasketPut.ComputePrice(StartTime, NbSteps, NbSim)))
-
-BermudanCall = BermudanSingleNameCall(spot, strike, rate, vol, maturity, Gen, exercise_dates, L)
-print("Bermudan single name call price: {:.2f}".format(BermudanCall.ComputePrice(StartTime, NbSteps, NbSim)))
-
-BBasketCall = BermudanBasketCall(spots, strike, rate, var_covar, maturity, Gen, dim, alpha, exercise_dates, L, eps, ConfidenceLevel)
-print("Bermudan Basket call price: {:.2f}".format(BBasketCall.ComputePrice(StartTime, NbSteps, NbSim)))
-
-BermudanPut = BermudanSingleNamePut(spot, strike, rate, vol, maturity, Gen, exercise_dates, L)
-print("Bermudan single name put price: {:.2f}".format(BermudanPut.ComputePrice(StartTime, NbSteps, NbSim)))
-
-BBasketPut = BermudanBasketPut(spots, strike, rate, var_covar, maturity, Gen, dim, alpha, exercise_dates, L)
-print("Bermudan Basket put price: {:.2f}".format(BBasketPut.ComputePrice(StartTime, NbSteps, NbSim)))
-
+myOption = get_my_option(Eur_Berm, SN_Basket, Call_Put)
+if SN_Basket == "Basket" and Call_Put == "Call":
+    print("{} {} {} option price: {:.2f}".format(Eur_Berm, SN_Basket, Call_Put,
+                                                 myOption.ComputePricePCV(StartTime, NbSteps, NbSim)))
+else:
+    print("{} {} {} option price: {:.2f}".format(Eur_Berm, SN_Basket, Call_Put ,myOption.ComputePrice(StartTime, NbSteps, NbSim)))

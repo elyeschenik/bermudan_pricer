@@ -16,9 +16,22 @@ class RandomProcess:
     def Simulate(self, StartTime, EndTime, NbSteps):
         pass
 
+    @abstractmethod
+    def SimulateAntithetic(self, StartTime, EndTime, NbSteps):
+        pass
+
+    def ClearPaths(self):
+        self.Paths = []
+
     def SimulateMultiplePaths(self, StartTime, EndTime, NbSteps, NbSim):
+        self.ClearPaths()
         for i in range(NbSim):
             self.Simulate(StartTime, EndTime, NbSteps)
+
+    def SimulateMultiplePathsAntithetic(self, StartTime, EndTime, NbSteps, NbSim):
+        self.ClearPaths()
+        for i in range(NbSim):
+            self.SimulateAntithetic(StartTime, EndTime, NbSteps)
 
     def GetPath(self, dimension):
         try:

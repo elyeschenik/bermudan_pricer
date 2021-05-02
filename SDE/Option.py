@@ -1,9 +1,13 @@
 from abc import abstractmethod
 import numpy as np
 from scipy.stats import norm
+from BSEuler1D import *
+from BSEulerND import *
+from BSMilstein1D import *
+
 
 class Option:
-    def __init__(self, spot, strike, rate, vol, maturity, Gen, eps, ConfidenceLevel):
+    def __init__(self, spot, strike, rate, vol, maturity, Gen, eps, ConfidenceLevel, antithetic):
         self.spot = spot
         self.strike = strike
         self.rate = rate
@@ -20,6 +24,8 @@ class Option:
         self.MinSim = 0
         self.MinSimPCV = 0
 
+        self.antithetic = antithetic
+
     @abstractmethod
     def ComputePrice(self):
         pass
@@ -34,8 +40,8 @@ class Option:
             return -S_0 * norm.cdf(-d1) + np.exp(-r * T) * K * norm.cdf(-d2)
 
     def VarReductionInfo(self, price):
-        print("The variance went from {:.2f} to {:.2f}".format(self.Variance, self.VariancePCV))
-        print("The minimum number of iteration for the true "
+        print("The variance of the simulated paths went from {:.2f} to {:.2f}".format(self.Variance, self.VariancePCV))
+        print("The minimum number of iteration for the computed "
               "price to be in the interval "
-              "{:.2f} +/- {} with {}% confidence level went from {} to {} ".format(price, self.eps, self.ConfidenceLevel * 100,
+              "TRUE PRICE +/- {} with {}% confidence level went from {} to {} ".format(self.eps, self.ConfidenceLevel * 100,
                                                                             self.MinSim, self.MinSimPCV))
