@@ -1,19 +1,22 @@
 from Option import *
-from BSEuler1D import *
-from BSEulerND import *
+
 from Laguerre import *
 
 class BermudanOption(Option):
-    def __init__(self, spot, strike, rate, vol, maturity, Gen, exercise_dates, L, eps, ConfidenceLevel):
-        super(BermudanOption, self).__init__(spot, strike, rate, vol, maturity, Gen, eps, ConfidenceLevel)
+    def __init__(self, spot, strike, rate, vol, maturity, Gen, exercise_dates, L, eps, ConfidenceLevel, antithetic):
+        super(BermudanOption, self).__init__(spot, strike, rate, vol, maturity, Gen, eps, ConfidenceLevel, antithetic)
         if max(exercise_dates) > maturity:
             raise Exception("Please input valid exercise dates that do not exceed the maturity of the contract")
         self.exercise_dates = exercise_dates
-        self.L = L
-        self.basis = Laguerre()
+        self.L = L #number of basis functions to use
+        self.basis = Laguerre() #basis function to use
 
     def FindStoppingTime(self, StartTime, NbSteps, NbSim):
-        self.model.SimulateMultiplePaths(StartTime, self.maturity, NbSteps, NbSim)
+        """ Algorithm to build the matrix of stopping times for each price simulation at each exercice date"""
+        if self.antithetic:
+            self.model.SimulateMultiplePathsAntithetic(StartTime, self.maturity, NbSteps, NbSim)
+        else:
+            self.model.SimulateMultiplePaths(StartTime, self.maturity, NbSteps, NbSim)
         n = len(self.exercise_dates)
 
         Tau = np.zeros((NbSim, n))
@@ -43,12 +46,14 @@ class BermudanOption(Option):
         return Tau
 
     def ComputePrice(self, StartTime, NbSteps, NbSim):
+        """ Compute the price of the option """
         Tau = self.FindStoppingTime(StartTime, NbSteps, NbSim)
-        price = sum([np.exp(-self.rate * Tau[j, 0]) * self.f(self.model.Paths[j].GetValue(Tau[j,0])) for j in
-                     range(NbSim)]) / NbSim
+        price = np.mean([np.exp(-self.rate * Tau[j, 0]) * self.f(self.model.Paths[j].GetValue(Tau[j, 0])) for j in
+                             range(NbSim)])
         return price
 
     def ComputePricePCV(self, StartTime, NbSteps, NbSim):
+        """ Compute the price using Pseudo control variate to reduce variance """
         Tau = self.FindStoppingTime(StartTime, NbSteps, NbSim)
         basket_var = np.dot(self.alpha.T, np.dot(self.vol, self.alpha))[0, 0]
         sigma_squared = (self.model.B ** 2)
@@ -75,8 +80,8 @@ class BermudanOption(Option):
 
 class BermudanBasketOption(BermudanOption):
 
-    def __init__(self, spot, strike, rate, vol, maturity, Gen, dim, alpha, exercise_dates, L, eps, ConfidenceLevel):
-        super(BermudanBasketOption, self).__init__(spot, strike, rate, vol, maturity, Gen, exercise_dates, L, eps, ConfidenceLevel)
+    def __init__(self, spot, strike, rate, vol, maturity, Gen, dim, alpha, exercise_dates, L, eps, ConfidenceLevel, antithetic):
+        super(BermudanBasketOption, self).__init__(spot, strike, rate, vol, maturity, Gen, exercise_dates, L, eps, ConfidenceLevel, antithetic)
         try:
             if dim <= 1 or dim%1 != 0:
                 raise Exception("Please input an integer dimension with values >= 2. If dim=1, use a single name class instead")
@@ -107,9 +112,14 @@ class BermudanBasketOption(BermudanOption):
 
 class BermudanSingleNameOption(BermudanOption):
 
-    def __init__(self, spot, strike, rate, vol, maturity, Gen, exercise_dates, L, eps, ConfidenceLevel):
-        super(BermudanSingleNameOption, self).__init__(spot, strike, rate, vol, maturity, Gen, exercise_dates, L, eps, ConfidenceLevel)
-        self.model = BSEuler1D(Gen, spot, rate, vol)
+    def __init__(self, spot, strike, rate, vol, maturity, Gen, model, exercise_dates, L, eps, ConfidenceLevel, antithetic):
+        super(BermudanSingleNameOption, self).__init__(spot, strike, rate, vol, maturity, Gen, exercise_dates, L, eps, ConfidenceLevel, antithetic)
+        if model == "euler":
+            self.model = BSEuler1D(Gen, spot, rate, vol, antithetic)
+        elif model == "milstein":
+            self.model = BSMilstein1D(Gen, spot, rate, vol, antithetic)
+        else:
+            raise Exception("Wrong model name, please input either 'euler' or 'milstein'")
 
     def computeP(self, s, I):
         return self.basis.compute(s, I)
@@ -118,8 +128,8 @@ class BermudanSingleNameOption(BermudanOption):
 
 class BermudanBasketCall(BermudanBasketOption):
 
-    def __init__(self, spot, strike, rate, vol, maturity, Gen, dim, alpha, exercise_dates, L, eps = 0, ConfidenceLevel = 0):
-        super(BermudanBasketCall, self).__init__(spot, strike, rate, vol, maturity, Gen, dim, alpha, exercise_dates, L, eps, ConfidenceLevel)
+    def __init__(self, spot, strike, rate, vol, maturity, Gen, dim, alpha, exercise_dates, L, eps = 0, ConfidenceLevel = 0, antithetic = False):
+        super(BermudanBasketCall, self).__init__(spot, strike, rate, vol, maturity, Gen, dim, alpha, exercise_dates, L, eps, ConfidenceLevel, antithetic)
         self.f = lambda s: max(np.dot(alpha.T, s)[0, 0] - strike, 0)
         self.f_PCV = lambda s: self.f(s) - max(np.exp(np.dot(alpha.T, np.log(s))[0, 0]) - strike, 0)
 
@@ -129,21 +139,21 @@ class BermudanBasketCall(BermudanBasketOption):
 
 class BermudanSingleNameCall(BermudanSingleNameOption):
 
-    def __init__(self, spot, strike, rate, vol, maturity, Gen, exercise_dates, L, eps = 0, ConfidenceLevel = 0):
-        super(BermudanSingleNameCall, self).__init__(spot, strike, rate, vol, maturity, Gen, exercise_dates, L, eps, ConfidenceLevel)
+    def __init__(self, spot, strike, rate, vol, maturity, Gen, model, exercise_dates, L, eps = 0, ConfidenceLevel = 0, antithetic = False):
+        super(BermudanSingleNameCall, self).__init__(spot, strike, rate, vol, maturity, Gen, model, exercise_dates, L, eps, ConfidenceLevel, antithetic)
         self.f = lambda s: max(s - strike, 0)
 
 
 class BermudanBasketPut(BermudanBasketOption):
 
-    def __init__(self, spot, strike, rate, vol, maturity, Gen, dim, alpha, exercise_dates, L, eps = 0, ConfidenceLevel = 0):
-        super(BermudanBasketPut, self).__init__(spot, strike, rate, vol, maturity, Gen, dim, alpha, exercise_dates, L, eps, ConfidenceLevel)
+    def __init__(self, spot, strike, rate, vol, maturity, Gen, dim, alpha, exercise_dates, L, eps = 0, ConfidenceLevel = 0, antithetic = False):
+        super(BermudanBasketPut, self).__init__(spot, strike, rate, vol, maturity, Gen, dim, alpha, exercise_dates, L, eps, ConfidenceLevel, antithetic)
         self.f = lambda s: max(strike - np.dot(alpha.T, s)[0, 0], 0)
 
 
 class BermudanSingleNamePut(BermudanSingleNameOption):
 
-    def __init__(self, spot, strike, rate, vol, maturity, Gen, exercise_dates, L, eps = 0, ConfidenceLevel = 0):
-        super(BermudanSingleNamePut, self).__init__(spot, strike, rate, vol, maturity, Gen, exercise_dates, L, eps, ConfidenceLevel)
+    def __init__(self, spot, strike, rate, vol, maturity, Gen, model, exercise_dates, L, eps = 0, ConfidenceLevel = 0, antithetic = False):
+        super(BermudanSingleNamePut, self).__init__(spot, strike, rate, vol, maturity, Gen, model, exercise_dates, L, eps, ConfidenceLevel, antithetic)
         self.f = lambda s: max(strike - s, 0)
 

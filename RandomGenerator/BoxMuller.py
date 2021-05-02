@@ -17,7 +17,7 @@ class BoxMuller(NormalGenerator):
         elif gen == 'vdc':
             self.gen = VanDerCorput(100,12)
         elif gen == 'dl':
-            self.gen = DeLuca(1000)
+            self.gen = DeLuca(10000)
         else:
             raise ValueError
 
