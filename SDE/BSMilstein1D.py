@@ -2,8 +2,8 @@ from BlackScholes1D import  *
 
 class BSMilstein1D(BlackScholes1D):
 
-    def __init__(self, Gen, spot, rate, vol, antithetic = False):
-        super(BSMilstein1D, self).__init__(Gen, spot, rate, vol, antithetic)
+    def __init__(self, Gen, spot, rate, vol):
+        super(BSMilstein1D, self).__init__(Gen, spot, rate, vol)
 
     def Simulate(self, StartTime, EndTime, NbSteps):
         Path = SinglePath(StartTime, EndTime, NbSteps)

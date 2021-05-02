@@ -3,12 +3,11 @@ import numpy as np
 
 class BlackScholesND(RandomProcess):
 
-    def __init__(self, Gen, spot, rate, var_covar, dim, antithetic):
+    def __init__(self, Gen, spot, rate, var_covar, dim):
         super(BlackScholesND, self).__init__(Gen, dim)
         self.spot = spot
         self.rate = rate
         self.var_covar = var_covar
-        self.antithetic = antithetic
 
     @abstractmethod
     def Simulate(self, StartTime, EndTime, NbSteps):
