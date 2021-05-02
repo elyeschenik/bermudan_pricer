@@ -23,15 +23,15 @@ Call_Put = "Call" #'Call' for call option and 'Put' for put option
 #Common parameters (some in the single name option type only)
 
 uniform_method = 'lc'  #'lc', 'ec', 'vdc' or 'dl'. To use quasi random simulations, use 'dl' or 'vdc'
-Gen = CentralLimit(uniform_method) #BoxMuller or CentralLimit
+Gen = BoxMuller(uniform_method) #BoxMuller or CentralLimit
 
 spot = 100
-vol = 0.3
+vol = 0
 rate = 0.01
 strike = 100
 maturity = 1
 #model to simulate the evolutioon of the asset prices
-model = "euler" #"euler" or "milstein", for basket options, there is no possible choice, only euler model is available
+model = "euler" #"euler" or "milstein"
 
 #Parameters in the multi-asset case
 spots = np.array([[100],[100]])
@@ -47,15 +47,15 @@ L = 10  #number of basis functions of L2(R)
 StartTime = 0
 EndTime = maturity
 NbSteps = 252 * maturity
-NbSim = 800
+NbSim = 500
 
 #Variance reduction variables when using pseudo control variate
 usePCV = False
-eps = 0.5 #precision of the confidence interval
-ConfidenceLevel = 2.5/100 #confidence level of the confidence interval
+eps = 0.2 #precision of the confidence interval
+ConfidenceLevel = 5/100 #confidence level of the confidence interval
 
 #Possibility to simulate the price paths using antithetic variables thus reducing Variance
-antithetic = True #can be True or False
+antithetic = False #can be True or False
 
 def get_my_option(Eur_Berm, SN_Basket, Call_Put):
     if Eur_Berm == "European":
@@ -66,9 +66,9 @@ def get_my_option(Eur_Berm, SN_Basket, Call_Put):
                 myOption = EuropeanSingleNamePut(spot, strike, rate, vol, maturity, Gen, model, eps, ConfidenceLevel, antithetic)
         elif SN_Basket == "Basket":
             if Call_Put == "Call":
-                myOption = EuropeanBasketCall(spots, strike, rate, var_covar, maturity, Gen, dim, alpha, eps, ConfidenceLevel, antithetic)
+                myOption = EuropeanBasketCall(spots, strike, rate, var_covar, maturity, Gen, model, dim, alpha, eps, ConfidenceLevel, antithetic)
             elif Call_Put == "Put":
-                myOption = EuropeanBasketPut(spots, strike, rate, var_covar, maturity, Gen, dim, alpha, eps, ConfidenceLevel, antithetic)
+                myOption = EuropeanBasketPut(spots, strike, rate, var_covar, maturity, Gen, model, dim, alpha, eps, ConfidenceLevel, antithetic)
     elif Eur_Berm == "Bermudan":
         if SN_Basket == "SN":
             if Call_Put == "Call":
@@ -77,9 +77,10 @@ def get_my_option(Eur_Berm, SN_Basket, Call_Put):
                 myOption = BermudanSingleNamePut(spot, strike, rate, vol, maturity, Gen, model, exercise_dates, L, eps, ConfidenceLevel, antithetic)
         elif SN_Basket == "Basket":
             if Call_Put == "Call":
-                myOption = BermudanBasketCall(spots, strike, rate, var_covar, maturity, Gen, dim, alpha, exercise_dates, L, eps, ConfidenceLevel, antithetic)
+                myOption = BermudanBasketCall(spots, strike, rate, var_covar, maturity, Gen, model, dim, alpha, exercise_dates, L, eps, ConfidenceLevel, antithetic)
             elif Call_Put == "Put":
-                myOption = BermudanBasketPut(spots, strike, rate, var_covar, maturity, Gen, dim, alpha, exercise_dates, L, eps, ConfidenceLevel, antithetic)
+                myOption = BermudanBasketPut(spots, strike, rate, var_covar, maturity, Gen, model, dim, alpha, exercise_dates, L, eps, ConfidenceLevel, antithetic)
+
     return myOption
 
 print("######################################### Variance Reduction #########################################")
@@ -97,11 +98,11 @@ if usePCV:
         print("{} {} {} variance: {:.2f}".format(Eur_Berm, SN_Basket, Call_Put, myOption.VariancePCV))
         print("{} {} {} minimum number of simulation to be in the "
               "interval TRUE PRICE +/-{} with {}% confidence level: {}".format(Eur_Berm, SN_Basket, Call_Put, eps,
-                                                                                   ConfidenceLevel, myOption.MinSimPCV))
+                                                                                   ConfidenceLevel * 100, myOption.MinSimPCV))
 else:
     price = myOption.ComputePrice(StartTime, NbSteps, NbSim)
     print("{} {} {} option price: {:.2f}".format(Eur_Berm, SN_Basket, Call_Put, price))
     print("{} {} {} variance: {:.2f}".format(Eur_Berm, SN_Basket, Call_Put,myOption.Variance))
     print("{} {} {} minimum number of simulation to be in the "
-          "interval TRUE PRICE +/-{} with {}% confidence level: {}".format(Eur_Berm, SN_Basket, Call_Put, eps, ConfidenceLevel, myOption.MinSim))
+          "interval TRUE PRICE +/-{} with {}% confidence level: {}".format(Eur_Berm, SN_Basket, Call_Put, eps, ConfidenceLevel * 100, myOption.MinSim))
 print("################################################# End #################################################")

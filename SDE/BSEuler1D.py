@@ -18,7 +18,13 @@ class BSEuler1D(BlackScholes1D):
         self.Paths.append(Path)
 
 
-    def SimulateAntithetic(self, StartTime, EndTime, NbSteps):
+
+        self.Paths.append(Path1)
+        self.Paths.append(Path2)
+
+
+    """
+    def SimulateAntithetic_bis(self, StartTime, EndTime, NbSteps):
         Path1 = SinglePath(StartTime, EndTime, NbSteps)
         Path2 = SinglePath(StartTime, EndTime, NbSteps)
         Path1.AddValue(self.spot)
@@ -35,3 +41,4 @@ class BSEuler1D(BlackScholes1D):
             lastInserted1, lastInserted2 = nextValue1, nextValue2
         self.Paths.append(Path1)
         self.Paths.append(Path2)
+    """

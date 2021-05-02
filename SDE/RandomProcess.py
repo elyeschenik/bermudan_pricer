@@ -28,10 +28,10 @@ class RandomProcess:
         for i in range(NbSim):
             self.Simulate(StartTime, EndTime, NbSteps)
 
-    def SimulateMultiplePathsAntithetic(self, StartTime, EndTime, NbSteps, NbSim):
+    def SimulateMultiplePathsAntithetic(self, StartTime, EndTime, NbSim):
         self.ClearPaths()
         for i in range(NbSim):
-            self.SimulateAntithetic(StartTime, EndTime, NbSteps)
+            self.SimulateAntithetic(StartTime, EndTime)
 
     def GetPath(self, dimension):
         try:
@@ -40,9 +40,19 @@ class RandomProcess:
             raise Exception("Simulation out of range")
         return out
 
+
+    def GetMean(self, f, time):
+        NbSim = len(self.Paths)
+        if NbSim > 1:
+            return sum([f(self.GetPath(j).GetValue(time)) for j in range(NbSim)]) / (NbSim)
+        else:
+            raise Exception("Not enough simulations to compute the expectation")
+
     def GetVariance(self, f, time):
-        if len(self.Paths) > 1:
-            return np.var([f(path.GetValue(time)) for path in self.Paths])
+        NbSim = len(self.Paths)
+        if NbSim > 1:
+            return sum([(f(self.GetPath(j).GetValue(time)) - self.GetMean(f, time)) ** 2 for j in range(NbSim)]) / (NbSim - 1)
+            #return np.var([f(path.GetValue(time)) for path in self.Paths])
         else:
             raise Exception("Not enough simulations to compute the variance")
 
