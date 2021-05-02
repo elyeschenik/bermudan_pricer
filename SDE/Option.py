@@ -16,7 +16,7 @@ class Option:
 
         self.Gen = Gen
 
-        #Variance reduction variables
+        #Pseudo Control Variate method variables
         self.eps = eps
         self.ConfidenceLevel = ConfidenceLevel
         self.Variance = 0
@@ -41,8 +41,8 @@ class Option:
             return -S_0 * norm.cdf(-d1) + np.exp(-r * T) * K * norm.cdf(-d2)
 
     def VarReductionInfo(self, price):
-        print("Thanks to the use of Pseudo Control Variate, the variance of the simulated paths went from {:.2f} to {:.2f}".format(self.Variance, self.VariancePCV))
-        print("The minimum number of iteration for the computed "
+        print("Thanks to the use of Pseudo Control Variate, the variance of the simulated paths payoffs went from {:.2f} to {:.2f}".format(self.Variance, self.VariancePCV))
+        print("The minimum number of simulations for the computed "
               "price to be in the interval "
               "TRUE PRICE +/- {} with {}% confidence level went from {} to {} ".format(self.eps, self.ConfidenceLevel * 100,
                                                                             self.MinSim, self.MinSimPCV))
