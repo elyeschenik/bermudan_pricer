@@ -4,6 +4,7 @@ from scipy.stats import norm
 from BSEuler1D import *
 from BSEulerND import *
 from BSMilstein1D import *
+from BSMilsteinND import *
 
 
 class Option:

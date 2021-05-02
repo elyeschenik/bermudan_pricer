@@ -21,7 +21,8 @@ class BSMilsteinND(BlackScholesND):
         lastInserted = self.spot
         for j in range(NbSteps):
             W = self.Gen.GenerateVector(self.dim)
-            nextValue = lastInserted + lastInserted * (self.rate * dt + np.dot(self.B, W) * np.sqrt(dt))
+            nextValue = lastInserted + lastInserted * ((self.rate - 0.5 * (self.B**2).sum(1).reshape(-1,1)) * dt
+                                                       + np.dot(self.B, W) * np.sqrt(dt) + 0.5 * (self.B**2).sum(1).reshape(-1,1) * W**2 * dt)
             Path.AddValue(nextValue)
             lastInserted = nextValue
 

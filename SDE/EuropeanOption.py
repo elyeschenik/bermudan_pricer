@@ -4,12 +4,10 @@ class EuropeanOption(Option):
     def __init__(self, spot, strike, rate, vol, maturity, Gen, eps, ConfidenceLevel, antithetic):
         super(EuropeanOption, self).__init__(spot, strike, rate, vol, maturity, Gen, eps, ConfidenceLevel, antithetic)
 
-
-
     def ComputePrice(self, StartTime, NbSteps, NbSim):
         """ Compute the price of the option """
         if self.antithetic:
-            self.model.SimulateMultiplePathsAntithetic(StartTime, self.maturity, NbSteps, NbSim)
+            self.model.SimulateMultiplePathsAntithetic(StartTime, self.maturity, NbSim)
             NbSim = len(self.model.Paths)
         else:
             self.model.SimulateMultiplePaths(StartTime, self.maturity, NbSteps, NbSim)
@@ -23,7 +21,7 @@ class EuropeanOption(Option):
     def ComputePricePCV(self, StartTime, NbSteps, NbSim):
         """ Compute the price using Pseudo control variate to reduce variance """
         if self.antithetic:
-            self.model.SimulateMultiplePathsAntithetic(StartTime, self.maturity, NbSteps, NbSim)
+            self.model.SimulateMultiplePathsAntithetic(StartTime, self.maturity, NbSim)
             NbSim = len(self.model.Paths)
         else:
             self.model.SimulateMultiplePaths(StartTime, self.maturity, NbSteps, NbSim)
@@ -52,7 +50,7 @@ class EuropeanOption(Option):
 
 class EuropeanBasketOption(EuropeanOption):
 
-    def __init__(self, spot, strike, rate, vol, maturity, Gen, dim, alpha, eps, ConfidenceLevel, antithetic):
+    def __init__(self, spot, strike, rate, vol, maturity, Gen, model, dim, alpha, eps, ConfidenceLevel, antithetic):
         super(EuropeanBasketOption, self).__init__(spot, strike, rate, vol, maturity, Gen, eps, ConfidenceLevel, antithetic)
         try:
             if dim <= 1:
@@ -71,7 +69,13 @@ class EuropeanBasketOption(EuropeanOption):
 
         self.dim = dim
         self.alpha = alpha
-        self.model = BSEulerND(Gen, spot, rate, vol, dim)
+        if model == "euler":
+            self.model = BSEulerND(Gen, spot, rate, vol, dim)
+        elif model == "milstein":
+            self.model = BSMilsteinND(Gen, spot, rate, vol, dim)
+        else:
+            raise Exception("Wrong model name, please input either 'euler' or 'milstein'")
+        #self.model = BSEulerND(Gen, spot, rate, vol, dim)
 
 
 class EuropeanSingleNameOption(EuropeanOption):
@@ -88,8 +92,8 @@ class EuropeanSingleNameOption(EuropeanOption):
 
 class EuropeanBasketCall(EuropeanBasketOption):
 
-    def __init__(self, spot, strike, rate, vol, maturity, Gen, dim, alpha, eps = 0, ConfidenceLevel = 0, antithetic = False):
-        super(EuropeanBasketCall, self).__init__(spot, strike, rate, vol, maturity, Gen, dim, alpha, eps, ConfidenceLevel, antithetic)
+    def __init__(self, spot, strike, rate, vol, maturity, Gen, model, dim, alpha, eps = 0, ConfidenceLevel = 0, antithetic = False):
+        super(EuropeanBasketCall, self).__init__(spot, strike, rate, vol, maturity, Gen, model, dim, alpha, eps, ConfidenceLevel, antithetic)
         self.f = lambda s: max(np.dot(alpha.T, s)[0, 0] - strike, 0)
         self.f_PCV = lambda s:  self.f(s) - max(np.exp(np.dot(alpha.T, np.log(s))[0, 0]) - strike, 0)
 
@@ -105,8 +109,8 @@ class EuropeanSingleNameCall(EuropeanSingleNameOption):
 
 class EuropeanBasketPut(EuropeanBasketOption):
 
-    def __init__(self, spot, strike, rate, vol, maturity, Gen, dim, alpha, eps = 0, ConfidenceLevel = 0, antithetic = False):
-        super(EuropeanBasketPut, self).__init__(spot, strike, rate, vol, maturity, Gen, dim, alpha, eps, ConfidenceLevel, antithetic)
+    def __init__(self, spot, strike, rate, vol, maturity, Gen, model, dim, alpha, eps = 0, ConfidenceLevel = 0, antithetic = False):
+        super(EuropeanBasketPut, self).__init__(spot, strike, rate, vol, maturity, Gen, model, dim, alpha, eps, ConfidenceLevel, antithetic)
         self.f = lambda s: max(strike - np.dot(alpha.T, s)[0, 0] , 0)
 
 

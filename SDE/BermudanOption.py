@@ -14,7 +14,7 @@ class BermudanOption(Option):
     def FindStoppingTime(self, StartTime, NbSteps, NbSim):
         """ Algorithm to build the matrix of stopping times for each price simulation at each exercice date"""
         if self.antithetic:
-            self.model.SimulateMultiplePathsAntithetic(StartTime, self.maturity, NbSteps, NbSim)
+            self.model.SimulateMultiplePathsAntithetic(StartTime, self.maturity, NbSim)
             NbSim = len(self.model.Paths)
         else:
             self.model.SimulateMultiplePaths(StartTime, self.maturity, NbSteps, NbSim)
@@ -85,7 +85,7 @@ class BermudanOption(Option):
 
 class BermudanBasketOption(BermudanOption):
 
-    def __init__(self, spot, strike, rate, vol, maturity, Gen, dim, alpha, exercise_dates, L, eps, ConfidenceLevel, antithetic):
+    def __init__(self, spot, strike, rate, vol, maturity, Gen, model, dim, alpha, exercise_dates, L, eps, ConfidenceLevel, antithetic):
         super(BermudanBasketOption, self).__init__(spot, strike, rate, vol, maturity, Gen, exercise_dates, L, eps, ConfidenceLevel, antithetic)
         try:
             if dim <= 1 or dim%1 != 0:
@@ -133,8 +133,8 @@ class BermudanSingleNameOption(BermudanOption):
 
 class BermudanBasketCall(BermudanBasketOption):
 
-    def __init__(self, spot, strike, rate, vol, maturity, Gen, dim, alpha, exercise_dates, L, eps = 0, ConfidenceLevel = 0, antithetic = False):
-        super(BermudanBasketCall, self).__init__(spot, strike, rate, vol, maturity, Gen, dim, alpha, exercise_dates, L, eps, ConfidenceLevel, antithetic)
+    def __init__(self, spot, strike, rate, vol, maturity, Gen, model, dim, alpha, exercise_dates, L, eps = 0, ConfidenceLevel = 0, antithetic = False):
+        super(BermudanBasketCall, self).__init__(spot, strike, rate, vol, maturity, Gen, model, dim, alpha, exercise_dates, L, eps, ConfidenceLevel, antithetic)
         self.f = lambda s: max(np.dot(alpha.T, s)[0, 0] - strike, 0)
         self.f_PCV = lambda s: self.f(s) - max(np.exp(np.dot(alpha.T, np.log(s))[0, 0]) - strike, 0)
 
@@ -151,8 +151,8 @@ class BermudanSingleNameCall(BermudanSingleNameOption):
 
 class BermudanBasketPut(BermudanBasketOption):
 
-    def __init__(self, spot, strike, rate, vol, maturity, Gen, dim, alpha, exercise_dates, L, eps = 0, ConfidenceLevel = 0, antithetic = False):
-        super(BermudanBasketPut, self).__init__(spot, strike, rate, vol, maturity, Gen, dim, alpha, exercise_dates, L, eps, ConfidenceLevel, antithetic)
+    def __init__(self, spot, strike, rate, vol, maturity, Gen, model, dim, alpha, exercise_dates, L, eps = 0, ConfidenceLevel = 0, antithetic = False):
+        super(BermudanBasketPut, self).__init__(spot, strike, rate, vol, maturity, Gen, model, dim, alpha, exercise_dates, L, eps, ConfidenceLevel, antithetic)
         self.f = lambda s: max(strike - np.dot(alpha.T, s)[0, 0], 0)
 
 
