@@ -4,7 +4,7 @@ This project aims at building a pricing tool for European and Bermudan options (
 # Authors :
 Jimena Luca de Tena 
 
-Elyès CHENIK 
+Elyès Chenik 
 
 Raphael Cohen-Salmon
 
